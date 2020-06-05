@@ -80,9 +80,10 @@ function resume_library_form_elements () {
 		),
 		array (
 			'name' => 'authorized_work_united_states',
-			'type' => 'checkbox',
+			'type' => 'select',
 			'label'=> 'Are you authorized to work in the United States ?',
-			'required' => true
+			'required' => true,
+			'options' => array ('YES', 'NO')
 		),
 		array (
 			'name' => 'resume_library_submit',
@@ -113,7 +114,7 @@ function resume_library_form () {
 						<input type=\"file\" name=\"{$name}\" value=\"{$value}\" size=\"40\" {$required} />
 						<small>
 							<br/>
-							Acceptable file types: doc, docx, pdf, txt, gif, jpg, jpeg, png.
+							Acceptable file types: doc, docx, pdf, txt, odt, wps, html, htm
 							<br/>
 							Maximum file size: 1mb.
 						</small>
@@ -130,6 +131,18 @@ function resume_library_form () {
 				break;
 			case 'submit':
 				echo "<input type=\"submit\" value=\"{$label}\" name=\"{$name}\" >";
+				break;
+			case 'select':
+				$options = '';
+				foreach ($field['options'] as $option) $options .= "<option>{$option}</option>";
+				echo "
+					<p>
+						<label>{$label}</label>
+						<select name=\"{$name}\" value=\"{$value}\" {$required} >
+							{$options}
+						</select>
+					</p>
+				";
 				break;
 			case 'select-multiple':
 				$options = '';
@@ -158,22 +171,30 @@ function resume_library_form () {
 }
 
 function resume_library_form_submission_handler () {
-
-	$values = array_map(function ($field) {
-		return sanitize_text_field ( $_POST[$field['name']] );
+	$fieldnames = array_map(function ($field) {
+		return $field['name'];
 	}, resume_library_form_elements ());
+
+	$values = array ();
+	foreach ( $fieldnames as $field ) {
+		$values[$field] = sanitize_text_field ( $_POST[$field] );
+	}
 
 	$base64 = resume_library_uploaded_file_toBas64 ('uploaded_resume');
 
 	if ( 0 === count ($base64['error']) ) {
-		if ( isset ( $_POST['authorized_work_united_states'] ) ) {
+		if ( 'YES' === $_POST['authorized_work_united_states'] ) {
+			$values['country_id'] = 'US';
 			$values['uploaded_resume'] = $base64['data'];
 			$response = resume_library_curl ($values);
-			echo '<p>';
-			echo json_encode($response);
-			echo '</p>';
-		}
-		echo "<p>Thanks {$values['first_name']}! submission success.</p>";
+
+			if ( isset ( $response->detail ) ) {
+				echo '<p>';
+				echo "{$response->title}: {$response->detail}";
+				echo '</p>';
+			} else echo "<p>Thanks {$values['first_name']}! submission success.</p>";
+
+		} else echo "<p>Thanks {$values['first_name']}! submission success.</p>";
 	} else {
 		echo '<p>';
 		foreach ( $base64['error'] as $error ) echo "{$error} <br/>";
@@ -183,7 +204,7 @@ function resume_library_form_submission_handler () {
 
 function resume_library_uploaded_file_toBas64 ($name) {
   $errors = array ();
-  $allowed_ext = array ('doc', 'docx', 'pdf', 'txt', 'gif', 'jpg', 'jpeg', 'png');
+  $allowed_ext = array ('doc', 'docx', 'pdf', 'txt', 'odt', 'wps', 'html', 'htm');
   $file_name = $_FILES[$name]['name'];
   $file_ext = strtolower ( pathinfo ( $file_name, PATHINFO_EXTENSION ) );
   $file_size = $_FILES[$name]['size'];
@@ -225,7 +246,7 @@ function resume_library_curl ($data) {
 
 	$response = curl_exec($curl);
 	curl_close($curl);
-	return $response;
+	return json_decode ($response);
 }
 
 ?>
