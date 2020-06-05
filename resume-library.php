@@ -95,7 +95,6 @@ function resume_library_form_elements () {
 }
 
 function resume_library_form () {
-	echo '<p>Upload your resume today to be headhunted in 50 different industries and apply for 1000s of jobs with 1-click apply.</p>';
 	echo '<p><small>* indicates required field</small></p>';
 	echo '<form action="' . esc_url( $_SERVER['REQUEST_URI'] ) . '" method="POST" enctype="multipart/form-data">';
 
@@ -130,7 +129,7 @@ function resume_library_form () {
 				";
 				break;
 			case 'submit':
-				echo "<input type=\"submit\" value=\"{$label}\" name=\"{$name}\" >";
+				echo "<input type=\"submit\" value=\"{$field['label']}\" name=\"{$name}\" >";
 				break;
 			case 'select':
 				$options = '';
