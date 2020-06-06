@@ -180,6 +180,7 @@ function resume_library_form_submission_handler () {
 	}
 
 	$base64 = resume_library_uploaded_file_toBas64 ('uploaded_resume');
+	$success_message = "<p style=\"color: #90EE90\">Thanks, {$values['first_name']}! Your submission was successful.</p>";
 
 	if ( 0 === count ($base64['error']) ) {
 		if ( 'YES' === $_POST['authorized_work_united_states'] ) {
@@ -189,9 +190,9 @@ function resume_library_form_submission_handler () {
 			$error = resume_library_error_response ($response);
 
 			if ( false !== $error ) echo "<p>{$error}</p>";
-			else echo "<p>Thanks {$values['first_name']}! submission success.</p>";
+			else echo $success_message;
 
-		} else echo "<p>Thanks {$values['first_name']}! submission success.</p>";
+		} else echo $success_message;
 	} else {
 		echo '<p>';
 		foreach ( $base64['error'] as $error ) echo "{$error} <br/>";
