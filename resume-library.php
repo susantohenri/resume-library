@@ -115,7 +115,7 @@ function resume_library_form () {
 							<br/>
 							Acceptable file types: doc, docx, pdf, txt, odt, wps, html, htm
 							<br/>
-							Maximum file size: 1mb.
+							Minimum file size: 6kb, and maximum: 1mb.
 						</small>
 					</p>
 				";
@@ -186,12 +186,10 @@ function resume_library_form_submission_handler () {
 			$values['country_id'] = 'US';
 			$values['uploaded_resume'] = $base64['data'];
 			$response = resume_library_curl ($values);
+			$error = resume_library_error_response ($response);
 
-			if ( isset ( $response->detail ) ) {
-				echo '<p>';
-				echo "{$response->title}: {$response->detail}";
-				echo '</p>';
-			} else echo "<p>Thanks {$values['first_name']}! submission success.</p>";
+			if ( false !== $error ) echo "<p>{$error}</p>";
+			else echo "<p>Thanks {$values['first_name']}! submission success.</p>";
 
 		} else echo "<p>Thanks {$values['first_name']}! submission success.</p>";
 	} else {
@@ -199,6 +197,18 @@ function resume_library_form_submission_handler () {
 		foreach ( $base64['error'] as $error ) echo "{$error} <br/>";
 		echo '</p>';
 	}
+}
+
+function resume_library_error_response ($response) {
+	$ignore_errors = array (
+		'Candidate rejected due to invalid email address',
+		'Candidate already registered',
+		'Candidate already exists'
+	);
+
+	if ( !isset ( $response->detail ) ) return false;
+	else if ( in_array ($response->detail, $ignore_errors) ) return false;
+	else return "{$response->title}: {$response->detail}";
 }
 
 function resume_library_uploaded_file_toBas64 ($name) {
